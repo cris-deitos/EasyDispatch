@@ -4,13 +4,17 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi-red.svg)
 
-**EasyDispatch** is a complete end-to-end system for managing a DMR dispatch operation on a Raspberry Pi with MMDVM hardware. It provides real-time monitoring, audio recording, GPS tracking, emergency alerts, and remote command capabilities for DMR radio networks.
+**EasyDispatch** is a complete end-to-end system for managing a DMR dispatch operation on a Raspberry Pi with MMDVM hardware. It provides real-time monitoring, audio recording, real-time audio streaming, GPS tracking, emergency alerts, and remote command capabilities for DMR radio networks.
+
+> **Note**: By default, the system is configured for **RX-only (receive-only)** operation with `Power=0` in MMDVM configuration. This makes it suitable as a monitoring/dispatch station without transmission capabilities.
 
 ## 🚀 Features
 
 ### Raspberry Pi Side (Python)
 - **Real-time DMR Traffic Monitoring** - Monitor all DMR transmissions on both timeslots
 - **Dual-Slot Audio Capture** - Record audio from both timeslots simultaneously
+- **Real-time Audio Streaming** - Stream live audio with Opus codec (16kbps per slot)
+- **Low-Latency Streaming** - 500ms-1.5s latency for real-time monitoring
 - **Data Parsing** - Decode SMS, GPS, emergency alerts, and telemetry
 - **API Integration** - Seamless communication with backend hosting
 - **Remote Commands** - Execute commands from dispatch center
@@ -20,6 +24,8 @@
 ### Backend Side (PHP)
 - **RESTful API** - Complete API for data collection and command dispatch
 - **Real-time Dashboard** - Monitor all radio activity
+- **Live Audio Streaming** - SSE-based audio streaming for browser clients
+- **Dual-Slot Audio Player** - Independent players for both DMR timeslots
 - **GPS Tracking** - Track radio positions on map
 - **Emergency Management** - Instant emergency alert notifications
 - **SMS Messaging** - Send and receive DMR SMS messages
@@ -39,6 +45,7 @@
 ### Software
 - Raspberry Pi OS (Bookworm or newer)
 - Python 3.9+
+- FFmpeg with Opus support (for audio streaming)
 - PHP 7.4+
 - MySQL 5.7+ or MariaDB 10.2+
 - Apache or Nginx web server
@@ -135,6 +142,8 @@ Update `/etc/easydispatch/config.yaml` with the generated API key.
 - **[Hardware Setup Guide](raspberry/docs/HARDWARE_SETUP.md)** - Detailed hardware assembly instructions
 - **[Installation Guide](raspberry/docs/INSTALLATION.md)** - Complete installation walkthrough
 - **[Frequency Configuration](raspberry/docs/FREQUENCY_CONFIG.md)** - Custom frequency setup guide
+- **[Audio Streaming Guide](raspberry/docs/AUDIO_STREAMING.md)** - Real-time audio streaming documentation
+- **[API Reference](raspberry/docs/API_REFERENCE.md)** - Complete API documentation
 
 ## 🗂️ Project Structure
 
@@ -147,6 +156,7 @@ EasyDispatch/
 │   │   ├── collector/           # Core modules
 │   │   │   ├── dmr_monitor.py
 │   │   │   ├── audio_capture.py
+│   │   │   ├── audio_streamer.py
 │   │   │   ├── data_parser.py
 │   │   │   ├── api_client.py
 │   │   │   └── command_handler.py
@@ -162,7 +172,11 @@ EasyDispatch/
     │   ├── v1/                  # API v1 endpoints
     │   ├── middleware/          # CORS & rate limiting
     │   └── utils/               # Helper functions
+    ├── public/                   # Public web files
+    │   └── dashboard/           # Live audio dashboard
     ├── audio/                    # Audio file storage
+    ├── tmp/                      # Temporary files
+    │   └── audio_buffers/       # Streaming audio buffers
     ├── logs/                     # API logs
     └── database/                 # Database schemas
         ├── schema.sql
@@ -173,6 +187,10 @@ EasyDispatch/
 
 ### Transmissions
 - `POST /api/v1/transmissions` - Log voice transmission
+
+### Audio Streaming
+- `POST /api/v1/stream-audio` - Submit audio chunk (Raspberry Pi)
+- `GET /api/v1/stream-listen` - SSE stream for live audio (Browser)
 
 ### SMS
 - `POST /api/v1/sms` - Log received SMS
@@ -206,7 +224,7 @@ EasyDispatch/
 
 ## 🛡️ Database Schema
 
-The system uses 8 main tables:
+The system uses 9 main tables:
 
 - `dmr_radios` - Radio registry
 - `dmr_talkgroups` - TalkGroup configuration
@@ -214,6 +232,7 @@ The system uses 8 main tables:
 - `dmr_sms` - SMS messages
 - `dmr_gps_positions` - GPS tracking
 - `dmr_emergencies` - Emergency alerts
+- `dmr_call_alerts` - Call alert notifications
 - `dmr_commands` - Remote commands
 - `dmr_api_keys` - API authentication
 

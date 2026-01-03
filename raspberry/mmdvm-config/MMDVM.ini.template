@@ -15,7 +15,8 @@ Daemon=0
 [Info]
 RXFrequency={{RX_FREQ}}
 TXFrequency={{TX_FREQ}}
-Power=1
+Power=0
+TXLevel=0
 Latitude={{LATITUDE}}
 Longitude={{LONGITUDE}}
 Height=0

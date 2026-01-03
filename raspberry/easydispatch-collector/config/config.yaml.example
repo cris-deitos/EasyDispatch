@@ -20,6 +20,15 @@ audio:
   bitrate: 64  # For compressed formats
   recording_dir: "/var/lib/easydispatch/audio"
 
+audio_streaming:
+  enabled: true
+  capture_device: "plughw:0,0"
+  sample_rate: 8000
+  bitrate: 16  # kbps per slot for Opus streaming
+  chunk_duration_ms: 100  # Lower = less latency, higher = more stable
+  max_retries: 5
+  retry_delay: 2
+
 mmdvm:
   log_path: "/var/log/mmdvm/MMDVM.log"
   config_path: "/etc/mmdvm/MMDVM.ini"
