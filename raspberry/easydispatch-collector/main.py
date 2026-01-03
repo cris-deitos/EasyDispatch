@@ -13,6 +13,12 @@ from pathlib import Path
 from threading import Thread, Event
 
 from collector import DMRMonitor, AudioCapture, DataParser, APIClient, CommandHandler
+try:
+    from collector.audio_streamer import AudioStreamer
+    AUDIO_STREAMING_AVAILABLE = True
+except ImportError:
+    AUDIO_STREAMING_AVAILABLE = False
+    AudioStreamer = None
 
 
 # Global stop event
@@ -82,6 +88,17 @@ class EasyDispatchCollector:
             'dmr_id': config['raspberry']['dmr_id']
         })
         
+        # Initialize audio streaming if enabled
+        self.audio_streamer = None
+        if AUDIO_STREAMING_AVAILABLE and config.get('audio_streaming', {}).get('enabled', False):
+            self.logger.info("Audio streaming is enabled")
+            self.audio_streamer = AudioStreamer(config['audio_streaming'], self.api_client)
+        else:
+            if not AUDIO_STREAMING_AVAILABLE:
+                self.logger.warning("Audio streaming not available (missing dependencies)")
+            else:
+                self.logger.info("Audio streaming is disabled in configuration")
+        
         # Track active audio recordings
         self.active_recordings = {}
         
@@ -132,6 +149,10 @@ class EasyDispatchCollector:
         # Stop DMR monitor
         self.dmr_monitor.stop()
         
+        # Stop audio streaming if active
+        if self.audio_streamer:
+            self.audio_streamer.cleanup_all()
+        
         # Stop API client
         self.api_client.stop_queue_processor()
         
@@ -177,6 +198,17 @@ class EasyDispatchCollector:
                 'transmission': transmission
             }
         
+        # Start audio streaming if enabled
+        if self.audio_streamer:
+            try:
+                self.audio_streamer.start_stream(
+                    transmission['slot'],
+                    transmission['radio_id'],
+                    transmission['destination_id']
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to start audio streaming: {e}", exc_info=True)
+        
         # Update radio status to online
         self.api_client.post_radio_status(
             transmission['radio_id'],
@@ -188,6 +220,13 @@ class EasyDispatchCollector:
     def handle_transmission_end(self, transmission: dict):
         """Handle end of voice transmission"""
         self.logger.info(f"Transmission ended: Slot {transmission['slot']}, Duration {transmission['duration']}s")
+        
+        # Stop audio streaming if enabled
+        if self.audio_streamer:
+            try:
+                self.audio_streamer.stop_stream(transmission['slot'])
+            except Exception as e:
+                self.logger.error(f"Failed to stop audio streaming: {e}", exc_info=True)
         
         # Stop audio recording
         key = f"{transmission['slot']}_{transmission['radio_id']}"
