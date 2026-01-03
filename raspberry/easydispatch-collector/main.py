@@ -16,9 +16,11 @@ from collector import DMRMonitor, AudioCapture, DataParser, APIClient, CommandHa
 try:
     from collector.audio_streamer import AudioStreamer
     AUDIO_STREAMING_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     AUDIO_STREAMING_AVAILABLE = False
     AudioStreamer = None
+    import logging
+    logging.getLogger(__name__).debug(f"Audio streaming not available: {e}")
 
 
 # Global stop event
@@ -91,8 +93,18 @@ class EasyDispatchCollector:
         # Initialize audio streaming if enabled
         self.audio_streamer = None
         if AUDIO_STREAMING_AVAILABLE and config.get('audio_streaming', {}).get('enabled', False):
-            self.logger.info("Audio streaming is enabled")
-            self.audio_streamer = AudioStreamer(config['audio_streaming'], self.api_client)
+            try:
+                # Check if FFmpeg is available
+                import subprocess
+                result = subprocess.run(['ffmpeg', '-version'], 
+                                      capture_output=True, timeout=5)
+                if result.returncode == 0:
+                    self.logger.info("Audio streaming is enabled")
+                    self.audio_streamer = AudioStreamer(config['audio_streaming'], self.api_client)
+                else:
+                    self.logger.error("FFmpeg not available, audio streaming disabled")
+            except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+                self.logger.error(f"FFmpeg check failed: {e}. Audio streaming disabled.")
         else:
             if not AUDIO_STREAMING_AVAILABLE:
                 self.logger.warning("Audio streaming not available (missing dependencies)")

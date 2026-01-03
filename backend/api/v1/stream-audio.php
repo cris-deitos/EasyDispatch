@@ -70,8 +70,28 @@ try {
         mkdir($slotDir, 0755, true);
     }
     
-    // Transmission identifier (unique per transmission session)
-    $transmissionId = "r{$radio_id}_tg{$talkgroup_id}_" . date('YmdHis');
+    # Transmission identifier (unique per transmission session)
+    // Use radio_id and talkgroup as part of ID to maintain consistency
+    $transmissionKey = "r{$radio_id}_tg{$talkgroup_id}";
+    $metaFile = $slotDir . "/current_meta.json";
+    
+    // Load existing metadata to get or create transmission ID
+    $transmissionId = null;
+    if (file_exists($metaFile)) {
+        $existingMeta = json_decode(file_get_contents($metaFile), true);
+        // Reuse ID if same radio/TG and recent (within 5 seconds)
+        if ($existingMeta && 
+            $existingMeta['radio_id'] == $radio_id &&
+            $existingMeta['talkgroup_id'] == $talkgroup_id &&
+            (time() - $existingMeta['last_update']) < 5) {
+            $transmissionId = $existingMeta['transmission_id'];
+        }
+    }
+    
+    // Create new transmission ID if needed
+    if (!$transmissionId) {
+        $transmissionId = $transmissionKey . '_' . date('YmdHis');
+    }
     
     // Chunk file path
     $chunkFile = $slotDir . "/{$transmissionId}_{$sequence}.opus";
@@ -97,15 +117,18 @@ try {
     ];
     file_put_contents($metaFile, json_encode($metadata));
     
-    // Cleanup old chunks (keep last 50)
-    $files = glob($slotDir . "/*.opus");
-    if (count($files) > 50) {
-        usort($files, function($a, $b) {
-            return filemtime($a) - filemtime($b);
-        });
-        $filesToDelete = array_slice($files, 0, count($files) - 50);
-        foreach ($filesToDelete as $file) {
-            @unlink($file);
+    // Cleanup old chunks (keep last 50) - only run occasionally
+    // Run cleanup only 10% of the time to reduce overhead
+    if (rand(1, 10) === 1) {
+        $files = glob($slotDir . "/*.opus");
+        if (count($files) > 50) {
+            usort($files, function($a, $b) {
+                return filemtime($a) - filemtime($b);
+            });
+            $filesToDelete = array_slice($files, 0, count($files) - 50);
+            foreach ($filesToDelete as $file) {
+                @unlink($file);
+            }
         }
     }
     

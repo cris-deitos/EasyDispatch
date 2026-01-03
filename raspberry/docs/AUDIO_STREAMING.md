@@ -4,6 +4,8 @@
 
 EasyDispatch implements a complete real-time audio streaming system for dual-slot DMR reception. The system streams live audio from both timeslots simultaneously with ultra-low latency (500ms - 1.5s).
 
+> **Note on Dual-Slot Audio**: The current implementation captures audio from a single ALSA device. For true independent dual-slot streaming, MMDVM needs to be configured to output separate audio streams per timeslot, or use DMR-specific audio routing. In most standard MMDVM configurations, both slots share the same audio output path. This is suitable for monitoring but for full dual-slot independent audio, hardware/firmware modifications may be required.
+
 ## Architecture
 
 ```

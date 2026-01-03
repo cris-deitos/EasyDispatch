@@ -10,8 +10,10 @@ header('Cache-Control: no-cache');
 header('Connection: keep-alive');
 header('X-Accel-Buffering: no'); // Disable nginx buffering
 
-// Flush output immediately
-ob_end_flush();
+// Flush output immediately - check if buffering is active
+if (ob_get_level() > 0) {
+    ob_end_flush();
+}
 flush();
 
 // Disable time limit for SSE
