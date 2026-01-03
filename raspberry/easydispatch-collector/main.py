@@ -12,7 +12,7 @@ import yaml
 from pathlib import Path
 from threading import Thread, Event
 
-from collector import DMRMonitor, AudioCapture, DataParser, APIClient, CommandHandler
+from collector import DMRMonitor, AudioCapture, DataParser, APIClient, CommandHandler, DisplayManager
 try:
     from collector.audio_streamer import AudioStreamer
     AUDIO_STREAMING_AVAILABLE = True
@@ -81,6 +81,10 @@ class EasyDispatchCollector:
         self.config = config
         self.logger = logging.getLogger(__name__)
         
+        # Initialize display manager first
+        display_config = config.get('display', {'enabled': False})
+        self.display_manager = DisplayManager(display_config)
+        
         # Initialize components
         self.api_client = APIClient(config['api'])
         self.audio_capture = AudioCapture(config['audio'])
@@ -128,6 +132,7 @@ class EasyDispatchCollector:
         # Background threads
         self.command_thread = None
         self.cleanup_thread = None
+        self.status_thread = None
         
         self.logger.info("EasyDispatch Collector initialized")
     
@@ -145,6 +150,10 @@ class EasyDispatchCollector:
         # Start cleanup thread
         self.cleanup_thread = Thread(target=self.cleanup_loop, daemon=True)
         self.cleanup_thread.start()
+        
+        # Start status monitoring thread
+        self.status_thread = Thread(target=self.status_monitoring_loop, daemon=True)
+        self.status_thread.start()
         
         # Start DMR monitoring (blocking)
         try:
@@ -197,6 +206,13 @@ class EasyDispatchCollector:
         """Handle start of voice transmission"""
         self.logger.info(f"Transmission started: Slot {transmission['slot']}, Radio {transmission['radio_id']}")
         
+        # Update display - slot is receiving
+        self.display_manager.update_slot_status(transmission['slot'], True)
+        
+        # Format DMR data string for display
+        dmr_string = f"RX S{transmission['slot']}: {transmission['radio_id']} -> TG{transmission['destination_id']}"
+        self.display_manager.show_dmr_data(dmr_string)
+        
         # Start audio recording
         recording_id = self.audio_capture.start_recording(
             transmission['slot'],
@@ -233,6 +249,13 @@ class EasyDispatchCollector:
         """Handle end of voice transmission"""
         self.logger.info(f"Transmission ended: Slot {transmission['slot']}, Duration {transmission['duration']}s")
         
+        # Update display - slot is no longer receiving
+        self.display_manager.update_slot_status(transmission['slot'], False)
+        
+        # Format DMR data string for display
+        dmr_string = f"END S{transmission['slot']}: {transmission['duration']}s, BER:{transmission.get('ber', 0):.1f}%"
+        self.display_manager.show_dmr_data(dmr_string)
+        
         # Stop audio streaming if enabled
         if self.audio_streamer:
             try:
@@ -260,6 +283,10 @@ class EasyDispatchCollector:
         """Handle data transmission (SMS, GPS, etc.)"""
         self.logger.info(f"Data transmission: Slot {data['slot']}, Radio {data['radio_id']}")
         
+        # Format DMR data string for display
+        dmr_string = f"DATA S{data['slot']}: {data['radio_id']} -> {data['destination_type']}{data['destination_id']}"
+        self.display_manager.show_dmr_data(dmr_string)
+        
         # Try to parse as SMS
         # Note: In real implementation, raw data would be available from MMDVM
         # This is a simplified example
@@ -270,6 +297,10 @@ class EasyDispatchCollector:
     def handle_emergency(self, emergency: dict):
         """Handle emergency alert"""
         self.logger.warning(f"EMERGENCY: Slot {emergency['slot']}")
+        
+        # Show emergency on display
+        dmr_string = f"!!! EMERGENCY !!! Slot {emergency['slot']}"
+        self.display_manager.show_dmr_data(dmr_string)
         
         # Find the radio ID from current transmissions
         # In real implementation, this would be parsed from the emergency packet
@@ -320,6 +351,34 @@ class EasyDispatchCollector:
             
             # Wait before next cleanup
             stop_event.wait(self.cleanup_interval)
+    
+    def status_monitoring_loop(self):
+        """Periodic monitoring of system status and display updates"""
+        self.logger.info("Started status monitoring loop")
+        
+        while not stop_event.is_set():
+            try:
+                # Check API connectivity
+                api_connected = self.api_client.check_api_connection()
+                self.display_manager.update_api_status(api_connected)
+                
+                # Check DB connectivity
+                db_connected = self.api_client.check_db_connection()
+                self.display_manager.update_db_status(db_connected)
+                
+                if not api_connected:
+                    self.logger.warning("API connection check failed")
+                
+                if not db_connected:
+                    self.logger.warning("DB connection check failed")
+                    
+            except Exception as e:
+                self.logger.error(f"Error in status monitoring: {e}", exc_info=True)
+                self.display_manager.update_api_status(False)
+                self.display_manager.update_db_status(False)
+            
+            # Wait before next check
+            stop_event.wait(self.status_interval)
 
 
 def main():

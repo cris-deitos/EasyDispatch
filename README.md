@@ -13,13 +13,16 @@
 ### Raspberry Pi Side (Python)
 - **Real-time DMR Traffic Monitoring** - Monitor all DMR transmissions on both timeslots
 - **Dual-Slot Audio Capture** - Record audio from both timeslots simultaneously
+- **MP3 Compression** - Automatic audio compression to save storage space (64kbps)
+- **Automatic Audio Cleanup** - Audio files deleted from Raspberry after successful upload
 - **Real-time Audio Streaming** - Stream live audio with Opus codec (16kbps per slot)
 - **Low-Latency Streaming** - 500ms-1.5s latency for real-time monitoring
+- **OLED Display** - Real-time status on integrated OLED (Slot RX, DB, API status)
+- **Status Monitoring** - Continuous monitoring of API and database connectivity
 - **Data Parsing** - Decode SMS, GPS, emergency alerts, and telemetry
 - **API Integration** - Seamless communication with backend hosting
 - **Remote Commands** - Execute commands from dispatch center
 - **Custom Frequencies** - Support for any VHF/UHF frequency within hardware limits
-- **OLED Display** - Real-time status display on integrated OLED
 
 ### Backend Side (PHP)
 - **RESTful API** - Complete API for data collection and command dispatch
@@ -38,6 +41,7 @@
 ### Hardware
 - **Raspberry Pi 3 Model B v1.2** (or newer)
 - **MMDVM_HS_Dual_Hat** - Duplex MMDVM Hotspot (UHF/VHF)
+- **OLED Display** - SSD1306 128x64 I2C OLED (optional, for status display)
 - **MicroSD Card** - 16GB minimum, 32GB recommended
 - **Power Supply** - 5V 2.5A minimum
 - **Antenna** - Dual-band VHF/UHF antenna
@@ -141,6 +145,8 @@ Update `/etc/easydispatch/config.yaml` with the generated API key.
 
 - **[Hardware Setup Guide](raspberry/docs/HARDWARE_SETUP.md)** - Detailed hardware assembly instructions
 - **[Installation Guide](raspberry/docs/INSTALLATION.md)** - Complete installation walkthrough
+- **[Display Setup Guide](raspberry/docs/DISPLAY_SETUP.md)** - OLED display configuration and usage
+- **[Audio Management Guide](raspberry/docs/AUDIO_MANAGEMENT.md)** - Audio capture, compression, and cleanup
 - **[Frequency Configuration](raspberry/docs/FREQUENCY_CONFIG.md)** - Custom frequency setup guide
 - **[Audio Streaming Guide](raspberry/docs/AUDIO_STREAMING.md)** - Real-time audio streaming documentation
 - **[API Reference](raspberry/docs/API_REFERENCE.md)** - Complete API documentation
