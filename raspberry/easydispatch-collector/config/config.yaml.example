@@ -1,0 +1,36 @@
+# EasyDispatch Collector Configuration Example
+# Copy this file to config.yaml and adjust settings
+
+raspberry:
+  id: "RASP001"
+  dmr_id: 2222000
+
+api:
+  endpoint: "https://your-hosting.com/easydispatch/api/v1"
+  key: "YOUR_API_KEY_HERE"
+  timeout: 30
+  retry_attempts: 3
+  raspberry_id: "RASP001"
+
+audio:
+  capture_device: "plughw:0,0"
+  sample_rate: 8000
+  format: "wav"
+  compression: "mp3"  # wav, mp3, or opus
+  bitrate: 64  # For compressed formats
+  recording_dir: "/var/lib/easydispatch/audio"
+
+mmdvm:
+  log_path: "/var/log/mmdvm/MMDVM.log"
+  config_path: "/etc/mmdvm/MMDVM.ini"
+
+polling:
+  commands_interval: 10  # Seconds between command polling
+  status_update_interval: 60  # Seconds between status updates
+  cleanup_interval: 3600  # Seconds between audio cleanup (1 hour)
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/var/log/easydispatch/collector.log"
+  max_bytes: 10485760  # 10 MB
+  backup_count: 5

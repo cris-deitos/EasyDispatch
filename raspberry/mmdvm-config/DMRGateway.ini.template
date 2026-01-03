@@ -1,0 +1,71 @@
+# DMR Gateway Configuration Template for EasyDispatch
+
+[General]
+Timeout=7
+RFHangTime=3
+NetHangTime=3
+Id={{DMR_ID}}
+Callsign={{CALLSIGN}}
+RptAddress=127.0.0.1
+RptPort=62032
+LocalAddress=127.0.0.1
+LocalPort=62031
+RuleTrace=0
+Daemon=0
+
+[Log]
+DisplayLevel=1
+FileLevel=1
+FilePath=/var/log/mmdvm
+FileRoot=DMRGateway
+
+[Voice]
+Enabled=1
+Language=en_GB
+Directory=/usr/local/share/DMRGateway
+
+[Info]
+Latitude={{LATITUDE}}
+Longitude={{LONGITUDE}}
+Height=0
+Location={{LOCATION}}
+Description=EasyDispatch DMR Dispatch System
+URL=https://github.com/cris-deitos/EasyDispatch
+
+[XLX Network 1]
+Enabled=0
+
+[DMR Network 1]
+Enabled=1
+Name=EasyDispatch_Local
+Address=127.0.0.1
+Port=62030
+Local=62040
+Password=passw0rd
+Location=1
+Debug=0
+
+[DMR Network 2]
+Enabled=0
+
+[DMR Network 3]
+Enabled=0
+
+[DMR Network 4]
+Enabled=0
+
+[DMR Network 5]
+Enabled=0
+
+[Talkgroup Rules]
+# Route all talkgroups to local network
+1-1=1
+1-2=1
+1-3=1
+1-4=1
+1-5=1
+1-6=1
+1-7=1
+1-8=1
+1-9=1
+2-9=1

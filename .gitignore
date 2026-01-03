@@ -1,0 +1,107 @@
+# EasyDispatch .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.log
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# Configuration files with secrets
+config.yaml
+*.local.yaml
+.env
+.env.local
+
+# Database
+*.sql.backup
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio files
+backend/audio/*.wav
+backend/audio/*.mp3
+backend/audio/*.opus
+
+# Logs
+*.log
+logs/
+backend/logs/*.log
+raspberry/logs/*.log
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.backup
+*.bak
+*.old
+*~
+
+# Rate limiting data
+backend/api/middleware/rate_limit.json
+
+# Offline queue
+raspberry/easydispatch-collector/offline_queue.json
+
+# Image builder working directory
+/tmp/easydispatch-build/
+
+# Compiled/generated files
+*.o
+*.ko
+*.obj
+*.elf
+*.gch
+*.pch
+*.lib
+*.a
+*.la
+*.lo
+*.dll
+*.so
+*.dylib

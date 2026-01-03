@@ -1,0 +1,25 @@
+[Unit]
+Description=EasyDispatch DMR Collector Service
+After=network-online.target mmdvmhost.service
+Wants=network-online.target
+Requires=mmdvmhost.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/easydispatch
+ExecStart=/usr/bin/python3 /opt/easydispatch/main.py /etc/easydispatch/config.yaml
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+
+[Install]
+WantedBy=multi-user.target
