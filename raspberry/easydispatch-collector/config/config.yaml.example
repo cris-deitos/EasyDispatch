@@ -29,6 +29,11 @@ audio_streaming:
   max_retries: 5
   retry_delay: 2
 
+display:
+  enabled: true  # Set to false to disable display
+  i2c_port: 1  # I2C port number (usually 1)
+  i2c_address: 0x3C  # I2C address of display (usually 0x3C for SSD1306)
+
 mmdvm:
   log_path: "/var/log/mmdvm/MMDVM.log"
   config_path: "/etc/mmdvm/MMDVM.ini"

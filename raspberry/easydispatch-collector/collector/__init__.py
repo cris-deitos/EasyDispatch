@@ -12,6 +12,7 @@ from .audio_streamer import AudioStreamer
 from .data_parser import DataParser
 from .api_client import APIClient
 from .command_handler import CommandHandler
+from .display_manager import DisplayManager
 
 __all__ = [
     'DMRMonitor',
@@ -19,5 +20,6 @@ __all__ = [
     'AudioStreamer',
     'DataParser',
     'APIClient',
-    'CommandHandler'
+    'CommandHandler',
+    'DisplayManager'
 ]

@@ -96,6 +96,15 @@ class APIClient:
             
             if response and response.get('success'):
                 logger.info(f"Transmission posted successfully: {response.get('transmission_id')}")
+                
+                # Delete audio file from Raspberry after successful upload
+                if audio_file and audio_file.exists():
+                    try:
+                        audio_file.unlink()
+                        logger.info(f"Audio file deleted from Raspberry: {audio_file}")
+                    except Exception as e:
+                        logger.error(f"Failed to delete audio file {audio_file}: {e}")
+                
                 return True
             else:
                 logger.error(f"Failed to post transmission: {response}")
@@ -278,6 +287,39 @@ class APIClient:
             logger.error(f"Failed to post command result: {response}")
             return False
     
+    def check_api_connection(self) -> bool:
+        """
+        Check if API is reachable
+        
+        Returns:
+            True if API is connected, False otherwise
+        """
+        try:
+            endpoint = f"{self.endpoint}/radios"
+            response = self._make_request('GET', endpoint)
+            return response is not None
+        except Exception as e:
+            logger.debug(f"API connection check failed: {e}")
+            return False
+    
+    def check_db_connection(self) -> bool:
+        """
+        Check if database is accessible through API
+        
+        Returns:
+            True if DB is connected, False otherwise
+        """
+        # We check DB connectivity through the API
+        # If the API can respond, it means DB is likely up
+        try:
+            endpoint = f"{self.endpoint}/radios"
+            response = self._make_request('GET', endpoint)
+            # If we get a valid response, DB is accessible
+            return response is not None and 'radios' in response
+        except Exception as e:
+            logger.debug(f"DB connection check failed: {e}")
+            return False
+    
     def _make_request(self, method: str, url: str, data: Optional[Dict] = None, files: Optional[Dict] = None) -> Optional[Dict]:
         """
         Make HTTP request with retry logic
@@ -357,7 +399,32 @@ class APIClient:
                 success = False
                 
                 if item_type == 'transmission':
-                    success = self.post_transmission(data, audio_file)
+                    # For transmission with audio file, we need special handling
+                    if audio_file and audio_file.exists():
+                        endpoint = f"{self.endpoint}/transmissions"
+                        files = {'audio': open(audio_file, 'rb')}
+                        try:
+                            response = self._make_request('POST', endpoint, data=data, files=files)
+                            files['audio'].close()
+                            
+                            if response and response.get('success'):
+                                logger.info(f"Queued transmission posted successfully")
+                                # Delete audio file after successful upload
+                                try:
+                                    audio_file.unlink()
+                                    logger.info(f"Audio file deleted from Raspberry: {audio_file}")
+                                except Exception as e:
+                                    logger.error(f"Failed to delete audio file {audio_file}: {e}")
+                                success = True
+                        except Exception as e:
+                            logger.error(f"Error posting queued transmission: {e}")
+                            if files:
+                                files['audio'].close()
+                    else:
+                        # No audio file, just post data
+                        endpoint = f"{self.endpoint}/transmissions"
+                        response = self._make_request('POST', endpoint, data=data)
+                        success = response and response.get('success')
                 elif item_type == 'sms':
                     success = self.post_sms(data)
                 elif item_type == 'gps':
