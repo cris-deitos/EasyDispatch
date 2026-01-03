@@ -155,6 +155,23 @@ CREATE TABLE IF NOT EXISTS `dmr_emergencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Emergency Alerts';
 
 -- ============================================================================
+-- Call Alerts
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS `dmr_call_alerts` (
+  `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `from_radio_id` INT(11) NOT NULL,
+  `to_radio_id` INT(11) NOT NULL,
+  `timeslot` TINYINT(1) NOT NULL COMMENT '1 or 2',
+  `received_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `from_radio_id` (`from_radio_id`),
+  KEY `to_radio_id` (`to_radio_id`),
+  KEY `received_at` (`received_at`),
+  KEY `timeslot` (`timeslot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='DMR Call Alerts';
+
+-- ============================================================================
 -- Remote Commands
 -- ============================================================================
 

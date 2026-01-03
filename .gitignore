@@ -47,6 +47,10 @@ backend/audio/*.wav
 backend/audio/*.mp3
 backend/audio/*.opus
 
+# Audio streaming buffers
+backend/tmp/audio_buffers/**/*.opus
+backend/tmp/audio_buffers/**/current_meta.json
+
 # Logs
 *.log
 logs/

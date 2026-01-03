@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyDispatch - Live Audio Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .slots-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .slot-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .slot-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .slot-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .status-idle {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .status-active {
+            background: #4caf50;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-connecting {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .status-error {
+            background: #f44336;
+            color: white;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .transmission-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .info-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .waveform-container {
+            background: #000;
+            height: 100px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        
+        .global-status {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .global-status h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .connection-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .indicator-connected {
+            background: #4caf50;
+            box-shadow: 0 0 10px #4caf50;
+        }
+        
+        .indicator-disconnected {
+            background: #f44336;
+        }
+        
+        @media (max-width: 768px) {
+            .slots-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📻 EasyDispatch Live Audio Monitor</h1>
+            <p>Real-Time Dual-Slot DMR Audio Streaming</p>
+        </header>
+        
+        <div class="slots-container">
+            <!-- Slot 1 -->
+            <div class="slot-card">
+                <div class="slot-header">
+                    <div class="slot-title">🎧 Slot 1</div>
+                    <div class="status-badge status-idle" id="status-1">Idle</div>
+                </div>
+                
+                <div class="transmission-info" id="info-1">
+                    <div class="info-row">
+                        <span class="info-label">Radio ID:</span>
+                        <span class="info-value" id="radio-1">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">TalkGroup:</span>
+                        <span class="info-value" id="tg-1">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Duration:</span>
+                        <span class="info-value" id="duration-1">0s</span>
+                    </div>
+                </div>
+                
+                <div class="waveform-container">
+                    <canvas id="waveform-1"></canvas>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-primary" onclick="connectSlot(1)">Connect</button>
+                    <button class="btn-danger" onclick="disconnectSlot(1)">Disconnect</button>
+                    <button class="btn-secondary" onclick="muteSlot(1)">Mute</button>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="latency-1">-</div>
+                        <div class="metric-label">Latency (ms)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="packets-1">0</div>
+                        <div class="metric-label">Packets</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="bitrate-1">-</div>
+                        <div class="metric-label">Bitrate</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Slot 2 -->
+            <div class="slot-card">
+                <div class="slot-header">
+                    <div class="slot-title">🎧 Slot 2</div>
+                    <div class="status-badge status-idle" id="status-2">Idle</div>
+                </div>
+                
+                <div class="transmission-info" id="info-2">
+                    <div class="info-row">
+                        <span class="info-label">Radio ID:</span>
+                        <span class="info-value" id="radio-2">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">TalkGroup:</span>
+                        <span class="info-value" id="tg-2">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Duration:</span>
+                        <span class="info-value" id="duration-2">0s</span>
+                    </div>
+                </div>
+                
+                <div class="waveform-container">
+                    <canvas id="waveform-2"></canvas>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn-primary" onclick="connectSlot(2)">Connect</button>
+                    <button class="btn-danger" onclick="disconnectSlot(2)">Disconnect</button>
+                    <button class="btn-secondary" onclick="muteSlot(2)">Mute</button>
+                </div>
+                
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="latency-2">-</div>
+                        <div class="metric-label">Latency (ms)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="packets-2">0</div>
+                        <div class="metric-label">Packets</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="bitrate-2">-</div>
+                        <div class="metric-label">Bitrate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="global-status">
+            <h2>System Status</h2>
+            <p>
+                <span class="connection-indicator indicator-disconnected" id="global-indicator"></span>
+                <span id="global-status-text">Disconnected</span>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin + '/api/v1';
+        
+        // Slot state
+        const slots = {
+            1: {
+                eventSource: null,
+                audioContext: null,
+                muted: false,
+                startTime: null,
+                packetCount: 0,
+                currentTransmission: null
+            },
+            2: {
+                eventSource: null,
+                audioContext: null,
+                muted: false,
+                startTime: null,
+                packetCount: 0,
+                currentTransmission: null
+            }
+        };
+        
+        // Initialize waveforms
+        function initWaveform(slot) {
+            const canvas = document.getElementById(`waveform-${slot}`);
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Draw idle waveform
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(0, canvas.height / 2 - 1, canvas.width, 2);
+        }
+        
+        // Update waveform (simplified visualization)
+        function updateWaveform(slot, audioData) {
+            const canvas = document.getElementById(`waveform-${slot}`);
+            const ctx = canvas.getContext('2d');
+            
+            // Shift existing content left
+            const imageData = ctx.getImageData(10, 0, canvas.width - 10, canvas.height);
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Clear right edge
+            ctx.fillStyle = '#000';
+            ctx.fillRect(canvas.width - 10, 0, 10, canvas.height);
+            
+            // Draw new data (random for demo - in real implementation, use audio analysis)
+            const amplitude = Math.random() * 40 + 10;
+            ctx.fillStyle = '#0f0';
+            ctx.fillRect(
+                canvas.width - 10,
+                canvas.height / 2 - amplitude / 2,
+                10,
+                amplitude
+            );
+        }
+        
+        // Connect to slot
+        function connectSlot(slot) {
+            if (slots[slot].eventSource) {
+                console.log(`Slot ${slot} already connected`);
+                return;
+            }
+            
+            updateStatus(slot, 'connecting', 'Connecting...');
+            
+            // Create EventSource for SSE
+            const eventSource = new EventSource(`${API_BASE}/stream-listen.php?slot=${slot}`);
+            slots[slot].eventSource = eventSource;
+            
+            // Initialize AudioContext
+            slots[slot].audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            slots[slot].packetCount = 0;
+            
+            eventSource.addEventListener('connected', (e) => {
+                console.log(`Slot ${slot} connected:`, e.data);
+                updateStatus(slot, 'idle', 'Connected - Idle');
+                document.getElementById('global-indicator').className = 'connection-indicator indicator-connected';
+                document.getElementById('global-status-text').textContent = 'Connected';
+            });
+            
+            eventSource.addEventListener('transmission_start', (e) => {
+                const data = JSON.parse(e.data);
+                console.log(`Slot ${slot} transmission started:`, data);
+                
+                slots[slot].currentTransmission = data;
+                slots[slot].startTime = Date.now();
+                slots[slot].packetCount = 0;
+                
+                updateStatus(slot, 'active', 'Active');
+                document.getElementById(`radio-${slot}`).textContent = data.radio_id;
+                document.getElementById(`tg-${slot}`).textContent = data.talkgroup_id;
+            });
+            
+            eventSource.addEventListener('audio_chunk', (e) => {
+                const data = JSON.parse(e.data);
+                slots[slot].packetCount++;
+                
+                // Update metrics
+                document.getElementById(`packets-${slot}`).textContent = slots[slot].packetCount;
+                document.getElementById(`bitrate-${slot}`).textContent = '16kbps';
+                
+                // Update duration
+                if (slots[slot].startTime) {
+                    const duration = Math.floor((Date.now() - slots[slot].startTime) / 1000);
+                    document.getElementById(`duration-${slot}`).textContent = `${duration}s`;
+                }
+                
+                // Calculate latency (simplified)
+                const latency = Math.floor(Math.random() * 500 + 500); // Demo: 500-1000ms
+                document.getElementById(`latency-${slot}`).textContent = latency;
+                
+                // Update waveform
+                updateWaveform(slot, null);
+                
+                // Decode and play audio
+                if (!slots[slot].muted) {
+                    playAudioChunk(slot, data.chunk);
+                }
+            });
+            
+            eventSource.addEventListener('transmission_end', (e) => {
+                console.log(`Slot ${slot} transmission ended`);
+                updateStatus(slot, 'idle', 'Connected - Idle');
+                slots[slot].currentTransmission = null;
+                slots[slot].startTime = null;
+                document.getElementById(`radio-${slot}`).textContent = '-';
+                document.getElementById(`tg-${slot}`).textContent = '-';
+                document.getElementById(`duration-${slot}`).textContent = '0s';
+            });
+            
+            eventSource.addEventListener('keepalive', (e) => {
+                // Connection is alive
+            });
+            
+            eventSource.onerror = (e) => {
+                console.error(`Slot ${slot} connection error:`, e);
+                updateStatus(slot, 'error', 'Error');
+                disconnectSlot(slot);
+            };
+        }
+        
+        // Disconnect from slot
+        function disconnectSlot(slot) {
+            if (slots[slot].eventSource) {
+                slots[slot].eventSource.close();
+                slots[slot].eventSource = null;
+            }
+            
+            if (slots[slot].audioContext) {
+                slots[slot].audioContext.close();
+                slots[slot].audioContext = null;
+            }
+            
+            updateStatus(slot, 'idle', 'Disconnected');
+            document.getElementById(`radio-${slot}`).textContent = '-';
+            document.getElementById(`tg-${slot}`).textContent = '-';
+            document.getElementById(`duration-${slot}`).textContent = '0s';
+            document.getElementById(`packets-${slot}`).textContent = '0';
+            document.getElementById(`latency-${slot}`).textContent = '-';
+            document.getElementById(`bitrate-${slot}`).textContent = '-';
+            
+            // Check if both slots disconnected
+            if (!slots[1].eventSource && !slots[2].eventSource) {
+                document.getElementById('global-indicator').className = 'connection-indicator indicator-disconnected';
+                document.getElementById('global-status-text').textContent = 'Disconnected';
+            }
+        }
+        
+        // Mute/unmute slot
+        function muteSlot(slot) {
+            slots[slot].muted = !slots[slot].muted;
+            const btn = event.target;
+            btn.textContent = slots[slot].muted ? 'Unmute' : 'Mute';
+        }
+        
+        // Play audio chunk
+        async function playAudioChunk(slot, base64Data) {
+            try {
+                // Decode base64
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // Decode Opus (Note: Web Audio API doesn't natively support Opus,
+                // in production you'd need opus.js or similar decoder)
+                // For now, this is a placeholder that would work with decoded PCM data
+                
+                const audioContext = slots[slot].audioContext;
+                // In real implementation, decode Opus to PCM here
+                // For demonstration, we skip actual playback
+                
+            } catch (error) {
+                console.error(`Error playing audio chunk for slot ${slot}:`, error);
+            }
+        }
+        
+        // Update status badge
+        function updateStatus(slot, status, text) {
+            const badge = document.getElementById(`status-${slot}`);
+            badge.className = `status-badge status-${status}`;
+            badge.textContent = text;
+        }
+        
+        // Initialize
+        window.addEventListener('load', () => {
+            initWaveform(1);
+            initWaveform(2);
+        });
+        
+        // Auto-reconnect on page visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // Reconnect slots that were connected
+                [1, 2].forEach(slot => {
+                    if (slots[slot].eventSource) {
+                        disconnectSlot(slot);
+                        setTimeout(() => connectSlot(slot), 1000);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
