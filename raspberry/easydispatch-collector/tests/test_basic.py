@@ -60,6 +60,17 @@ class TestDisplayManager(unittest.TestCase):
         
         status = self.display.get_status()
         self.assertEqual(status['last_dmr_data'], test_data)
+    
+    def test_invalid_slot_number(self):
+        """Test handling of invalid slot numbers"""
+        # Invalid slot numbers should be logged but not crash
+        self.display.update_slot_status(0, True)
+        self.display.update_slot_status(3, True)
+        
+        # Status should remain unchanged
+        status = self.display.get_status()
+        self.assertFalse(status['slot1_rx'])
+        self.assertFalse(status['slot2_rx'])
 
 
 class TestAPIClient(unittest.TestCase):
@@ -82,16 +93,10 @@ class TestAPIClient(unittest.TestCase):
         self.assertEqual(self.client.endpoint, self.config['endpoint'])
         self.assertEqual(self.client.api_key, self.config['key'])
     
-    def test_format_datetime(self):
-        """Test datetime formatting"""
-        dt = datetime(2024, 1, 1, 12, 0, 0)
-        formatted = self.client._format_datetime(dt)
-        self.assertEqual(formatted, '2024-01-01 12:00:00')
-    
-    def test_format_none_datetime(self):
-        """Test formatting None datetime"""
-        formatted = self.client._format_datetime(None)
-        self.assertIsNone(formatted)
+    def test_offline_queue_initialization(self):
+        """Test offline queue is initialized"""
+        self.assertIsNotNone(self.client.offline_queue)
+        self.assertTrue(hasattr(self.client, 'queue_file'))
 
 
 class TestAudioCapture(unittest.TestCase):

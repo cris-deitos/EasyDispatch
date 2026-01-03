@@ -306,15 +306,21 @@ class APIClient:
         """
         Check if database is accessible through API
         
+        Note: This method checks DB connectivity by verifying that the API
+        can successfully query the database and return valid data. It uses
+        the same /radios endpoint as check_api_connection() but additionally
+        validates that the response contains expected data structure, which
+        indicates successful database access.
+        
         Returns:
             True if DB is connected, False otherwise
         """
         # We check DB connectivity through the API
-        # If the API can respond, it means DB is likely up
+        # If the API can respond with valid data structure, it means DB is accessible
         try:
             endpoint = f"{self.endpoint}/radios"
             response = self._make_request('GET', endpoint)
-            # If we get a valid response, DB is accessible
+            # If we get a valid response with expected structure, DB is accessible
             return response is not None and 'radios' in response
         except Exception as e:
             logger.debug(f"DB connection check failed: {e}")
@@ -402,10 +408,10 @@ class APIClient:
                     # For transmission with audio file, we need special handling
                     if audio_file and audio_file.exists():
                         endpoint = f"{self.endpoint}/transmissions"
-                        files = {'audio': open(audio_file, 'rb')}
                         try:
-                            response = self._make_request('POST', endpoint, data=data, files=files)
-                            files['audio'].close()
+                            with open(audio_file, 'rb') as f:
+                                files = {'audio': f}
+                                response = self._make_request('POST', endpoint, data=data, files=files)
                             
                             if response and response.get('success'):
                                 logger.info(f"Queued transmission posted successfully")
@@ -418,8 +424,6 @@ class APIClient:
                                 success = True
                         except Exception as e:
                             logger.error(f"Error posting queued transmission: {e}")
-                            if files:
-                                files['audio'].close()
                     else:
                         # No audio file, just post data
                         endpoint = f"{self.endpoint}/transmissions"

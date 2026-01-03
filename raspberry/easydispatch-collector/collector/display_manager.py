@@ -96,6 +96,10 @@ class DisplayManager:
             slot: Slot number (1 or 2)
             active: Whether slot is receiving
         """
+        if slot not in [1, 2]:
+            logger.warning(f"Invalid slot number: {slot}. Must be 1 or 2.")
+            return
+        
         with self.lock:
             if slot == 1:
                 self.status['slot1_rx'] = active
