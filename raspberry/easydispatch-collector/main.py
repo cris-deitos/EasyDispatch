@@ -275,12 +275,25 @@ def main():
     """Main entry point"""
     # Determine config path
     if len(sys.argv) > 1:
-        config_path = sys.argv[1]
+        config_path = Path(sys.argv[1])
     else:
-        config_path = Path(__file__).parent / 'config' / 'config.yaml'
+        # Try multiple locations in order of preference
+        possible_paths = [
+            Path('/etc/easydispatch/config.yaml'),
+            Path(__file__).parent / 'config' / 'config.yaml',
+            Path.cwd() / 'config.yaml'
+        ]
+        config_path = None
+        for path in possible_paths:
+            if path.exists():
+                config_path = path
+                break
+        
+        if config_path is None:
+            config_path = possible_paths[0]  # Use default for error message
     
     # Check if config exists
-    if not Path(config_path).exists():
+    if not config_path.exists():
         print(f"Configuration file not found: {config_path}")
         print("Please create config.yaml from config.yaml.example")
         sys.exit(1)

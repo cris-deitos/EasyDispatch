@@ -4,10 +4,11 @@
  */
 
 // Database connection parameters
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'easydispatch');
-define('DB_USER', 'easydispatch_api');
-define('DB_PASS', 'your_secure_password_here');
+// For production, use environment variables or a separate config file
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'easydispatch');
+define('DB_USER', getenv('DB_USER') ?: 'easydispatch_api');
+define('DB_PASS', getenv('DB_PASS') ?: 'your_secure_password_here');
 define('DB_CHARSET', 'utf8mb4');
 
 // PDO Connection

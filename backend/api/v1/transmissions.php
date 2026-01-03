@@ -122,7 +122,9 @@ try {
     ];
     
     if ($audioFile) {
-        $response['audio_url'] = 'https://' . $_SERVER['HTTP_HOST'] . '/' . $audioFile;
+        // Use configured base URL or construct safely
+        $baseUrl = getenv('API_BASE_URL') ?: 'https://' . filter_var($_SERVER['HTTP_HOST'], FILTER_SANITIZE_URL);
+        $response['audio_url'] = rtrim($baseUrl, '/') . '/' . $audioFile;
     }
     
     sendSuccess($response, 201);

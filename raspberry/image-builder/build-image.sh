@@ -5,7 +5,9 @@
 set -e
 
 # Configuration
-RPI_OS_IMAGE_URL="https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2023-12-11/2023-12-11-raspios-bookworm-armhf-lite.img.xz"
+# NOTE: Update this URL periodically to use the latest Raspberry Pi OS release
+# Check: https://www.raspberrypi.com/software/operating-systems/
+RPI_OS_IMAGE_URL="${RPI_OS_IMAGE_URL:-https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2023-12-11/2023-12-11-raspios-bookworm-armhf-lite.img.xz}"
 IMAGE_NAME="easydispatch-$(date +%Y%m%d).img"
 WORK_DIR="/tmp/easydispatch-build"
 MOUNT_POINT="${WORK_DIR}/mount"
