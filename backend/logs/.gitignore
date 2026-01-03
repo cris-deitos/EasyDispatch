@@ -1,0 +1,4 @@
+# EasyDispatch Logs
+# This directory contains API logs
+
+*.log
